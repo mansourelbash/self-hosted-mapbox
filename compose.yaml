@@ -1,0 +1,32 @@
+services:
+  tts:
+    build: ./tts
+    ports:
+      - "127.0.0.1:5001:5001"
+    volumes:
+      - tts-models:/models
+    restart: unless-stopped
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1
+    command: osrm-routed --algorithm mld /data/jordan-latest.osrm
+    volumes:
+      - osrm-data:/data:ro
+    ports:
+      - "127.0.0.1:5000:5000"
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      args:
+        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN:-}
+    ports:
+      - "8080:80"
+    depends_on:
+      - osrm
+      - tts
+    restart: unless-stopped
+volumes:
+  tts-models:
+  osrm-data:
+    external: true
+    name: masar-osrm-jordan-data
